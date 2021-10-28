@@ -1,0 +1,22 @@
+{
+  "name": "masadora-gd-center-tracker",
+  "version": "1.0.0",
+  "description": "Track the latest group-buying information on gd-center.masadora.jp by username.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "config": "node config.js"
+  },
+  "author": "rde9",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rde9/masadora-gd-center-tracker/issues"
+  },
+  "homepage": "https://github.com/rde9/masadora-gd-center-tracker#readme",
+  "dependencies": {
+    "cron": "^1.8.2",
+    "request": "^2.88.2",
+    "shelljs": "^0.8.4"
+  }
+}
