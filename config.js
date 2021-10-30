@@ -1,5 +1,6 @@
 const fs = require('fs');
 const inquirer = require('inquirer');
+const request = require('request');
 const { exit } = require('process');
 
 const baseUrl = 'https://gd.masadora.jp/api/group/delivery';
