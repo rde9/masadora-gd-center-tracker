@@ -1,0 +1,6 @@
+# Secret
+.env
+users.json
+
+# Dependency
+node_modules
