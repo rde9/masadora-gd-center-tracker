@@ -21,3 +21,13 @@ npm start
 ```sh
 npm config
 ```
+
+## Feature
+
+多端推送。
+
+- Telegram bot
+
+- Server酱 微信通知 [参考文档](https://sct.ftqq.com/)
+
+- iGot 微信通知 [参考文档](https://wahao.github.io/Bark-MP-helper/)
