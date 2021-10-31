@@ -3,9 +3,13 @@ const fs = require('fs');
 const inquirer = require('inquirer');
 const shell = require('shelljs');
 const request = require('request');
+const dotenv = require('dotenv');
+const push = require('./push');
 
 let tg_bot_token = '123:abc';
-let tg_chat_id = '0123456';
+let tg_user_id = '0123456';
+let igot_push_key = '123abc';
+let serverchan_key = 'SCT123456';
 
 const baseUrl = 'https://gd.masadora.jp/api/group/delivery';
 const defaultConfig = {
@@ -35,17 +39,28 @@ const promisifyRequest = (options) => {
 }
 
 const init = async () => {
-  let answer = await promptQuestion('TG_TOKEN', 'input', '初始化：请输入Telegram bot token');
-  tg_bot_token = answer.TG_TOKEN;
+  let answer = await promptQuestion('TG_BOT_TOKEN', 'input', '初始化：请输入Telegram bot token（不使用则留空，下同）');
+  tg_bot_token = answer.TG_BOT_TOKEN;
 
-  answer = await promptQuestion('TG_CHAT_ID', 'input', '初始化：请输入Telegram chat id');
-  tg_chat_id = answer.TG_CHAT_ID;
+  answer = await promptQuestion('TG_USER_ID', 'input', '初始化：请输入 @getuseridbot 中获取到的纯数字ID');
+  tg_user_id = answer.TG_USER_ID;
+
+  answer = await promptQuestion('IGOT_PUSH_KEY', 'input', '初始化：请输入iGot微信小程序提供的推送key');
+  igot_push_key = answer.IGOT_PUSH_KEY;
+  
+  answer = await promptQuestion('SERVERCHAN_KEY', 'input', '初始化：请输入Server酱提供的SendKey');
+  serverchan_key = answer.SERVERCHAN_KEY;
+
+  let envContent = `TG_BOT_TOKEN=${tg_bot_token}\nTG_USER_ID=${tg_user_id}\nIGOT_PUSH_KEY=${igot_push_key}\nSERVERCHAN_KEY=${serverchan_key}`;
+  fs.writeFileSync('\.env', envContent);
+
+  dotenv.config();
 
   let USERNAME = null;
   let data = null;
 
   while (USERNAME == null) {
-    answer = await promptQuestion('USERNAME', 'input', '初始化：请输入用户名');
+    answer = await promptQuestion('USERNAME', 'input', '初始化：请输入追踪用户名');
     USERNAME = answer.USERNAME;
     const options = {
       url: baseUrl,
@@ -89,7 +104,7 @@ const job = new cron.CronJob('*/20 * * * * *', function () {
       }
       promisifyRequest(options).then((body) => {
         if (body.content[0].infoNo != element.currentGroupNo) {
-          pushNotification(element.username, body.content[0].infoNo);
+          push(element.username, body.content[0].infoNo);
           element.currentGroupNo = body.content[0].infoNo;
         }
         resolve();
@@ -103,13 +118,6 @@ const job = new cron.CronJob('*/20 * * * * *', function () {
   });
 });
 
-const pushNotification = async (username, infoNo) => {
-  const text = encodeURI(`用户 ${username} 拼团信息有更新\n最新团号： \`${infoNo}\``);
-  const tgUrl = `https://api.telegram.org/bot${tg_bot_token}/sendMessage?chat_id=${tg_chat_id}&parse_mode=MarkdownV2&text=${text}`;
-  promisifyRequest(tgUrl).catch(err => {
-    console.log('Telegram消息推送失败：' + err.message);
-  })
-}
 
 const promptQuestion = (name, type, message) => {
   const question = {
