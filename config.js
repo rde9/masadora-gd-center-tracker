@@ -1,6 +1,7 @@
 const fs = require('fs');
 const inquirer = require('inquirer');
 const request = require('request');
+const dotenv = require('dotenv').config();
 const { exit } = require('process');
 
 const baseUrl = 'https://gd.masadora.jp/api/group/delivery';
@@ -31,6 +32,7 @@ const handleQuestions = async () => {
   console.log('[1] 显示列表');
   console.log('[2] 添加用户');
   console.log('[3] 删除用户');
+  console.log('[4] 修改推送配置');
   console.log('[0] 退出');
   answer = await promptQuestion('ACTION', 'input', '请输入需要执行的动作');
   let tmp = fs.readFileSync('./users.json', 'utf-8');
@@ -81,6 +83,39 @@ const handleQuestions = async () => {
         fs.writeFileSync('./users.json', JSON.stringify(readConfig, null, 2), { encoding: 'utf-8' });
         console.log('删除成功');
       }
+      break;
+    case '4':
+      console.log('当前推送配置');
+      console.log('[1] Telegram bot token: ' + process.env.TG_BOT_TOKEN);
+      console.log('[2] Telegram user id: ' + process.env.TG_USER_ID);
+      console.log('[3] iGot推送key: ' + process.env.IGOT_PUSH_KEY);
+      console.log('[4] Server酱SendKey: ' + process.env.SERVERCHAN_KEY);
+
+      let envContent = '';
+      answer = await promptQuestion('ENV_MODIFY', 'input', '请输入需要修改的推送配置');
+      switch (answer.ENV_MODIFY) {
+        case '1':
+          answer = await promptQuestion('TG_BOT_TOKEN', 'input', '请输入Telegram bot token');  
+          envContent = `TG_BOT_TOKEN=${answer.TG_BOT_TOKEN}\nTG_USER_ID=${process.env.TG_USER_ID}\nIGOT_PUSH_KEY=${process.env.IGOT_PUSH_KEY}\nSERVERCHAN_KEY=${process.env.SERVERCHAN_KEY}`;
+          break;
+        case '2':
+          answer = await promptQuestion('TG_USER_ID', 'input', '请输入 @getuseridbot 中获取到的纯数字ID');  
+          envContent = `TG_BOT_TOKEN=${process.env.TG_BOT_TOKEN}\nTG_USER_ID=${answer.TG_USER_ID}\nIGOT_PUSH_KEY=${process.env.IGOT_PUSH_KEY}\nSERVERCHAN_KEY=${process.env.SERVERCHAN_KEY}`;
+          break;
+        case '3':
+          answer = await promptQuestion('IGOT_PUSH_KEY', 'input', '请输入iGot微信小程序提供的推送key');  
+          envContent = `TG_BOT_TOKEN=${process.env.TG_BOT_TOKEN}\nTG_USER_ID=${process.env.TG_USER_ID}\nIGOT_PUSH_KEY=${answer.IGOT_PUSH_KEY}\nSERVERCHAN_KEY=${process.env.SERVERCHAN_KEY}`;
+          break;
+        case '4':
+          answer = await promptQuestion('SERVERCHAN_KEY', 'input', '初始化：请输入Server酱提供的SendKey');
+          envContent = `TG_BOT_TOKEN=${process.env.TG_BOT_TOKEN}\nTG_USER_ID=${process.env.TG_USER_ID}\nIGOT_PUSH_KEY=${process.env.IGOT_PUSH_KEY}\nSERVERCHAN_KEY=${answer.SERVERCHAN_KEY}`;
+          break;
+        default:
+          console.log('输入不合法');
+          exit(-1);
+      }
+      fs.writeFileSync('\.env', envContent);
+      console.log('修改成功');
       break;
     case '0':
       break;

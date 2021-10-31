@@ -140,6 +140,7 @@ const checkConfig = async (config) => {
 const run = async () => {
   await checkConfig('./users.json').then(() => {
     job.start();
+    console.log('定时任务已设置');
   })
 }
 
