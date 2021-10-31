@@ -19,7 +19,7 @@ npm start
 管理监控列表
 
 ```sh
-npm run mod
+node config
 ```
 
 ## Feature
