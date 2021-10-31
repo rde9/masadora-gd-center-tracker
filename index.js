@@ -20,6 +20,7 @@ const defaultConfig = {
         'username': '',
         'currentGroupNo': '',
         'groupStatus': '' // 2000 已发布，待完成 | 3000 已截单
+        'groupHistory': [] // 最近的5个团
       }
       */
     ]
@@ -62,7 +63,7 @@ const init = async () => {
   while (USERNAME == null) {
     answer = await promptQuestion('USERNAME', 'input', '初始化：请输入追踪用户名');
     USERNAME = answer.USERNAME;
-    const options = {
+    let options = {
       url: baseUrl,
       method: 'get',
       json: true,
@@ -75,12 +76,20 @@ const init = async () => {
       console.log('请求错误或用户不存在');
       USERNAME = null;
     } else {
+      //获取历史5个团号
+      options.qs.size = 5;
+      data = await promisifyRequest(options).catch(err => {
+        console.log("请求错误：" + err.message);
+      });
       let tmp = fs.readFileSync('./users.json', 'utf-8');
       readConfig = JSON.parse(tmp);
       readConfig.list.push({
         'username': USERNAME,
         'currentGroupNo': data.content[0].infoNo,
-        'groupStatus': data.content[0].status
+        'groupStatus': data.content[0].status,
+        'groupHistory': data.content.map(element => {
+          return element.infoNo;
+        })
       })
       fs.writeFileSync('./users.json', JSON.stringify(readConfig, null, 2), { encoding: 'utf-8' });
       console.log('添加成功');
@@ -103,9 +112,11 @@ const job = new cron.CronJob('*/20 * * * * *', function () {
         qs: { page: 0, size: 1, keyword: element.username }
       }
       promisifyRequest(options).then((body) => {
-        if (body.content[0].infoNo != element.currentGroupNo) {
+        // 获取到的团号不在历史团号里
+        if(!element.groupHistory.includes(body.content[0].infoNo)) {
           push(element.username, body.content[0].infoNo);
           element.currentGroupNo = body.content[0].infoNo;
+          element.groupHistory.unshift(body.content[0].infoNo);
         }
         resolve();
       }).catch(err => {

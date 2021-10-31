@@ -46,13 +46,15 @@ const handleQuestions = async () => {
         console.log(`用户名：${element.username}`);
         console.log(`最新团号：${element.currentGroupNo}`);
         console.log(`状态：${element.groupStatus}`);
+        let historyStr = element.groupHistory.join(' ');
+        console.log(`历史团号：${historyStr}`);
         console.log();
       });
       break;
     case '2':
       answer = await promptQuestion('USERNAME', 'input', '请输入用户名');
       let USERNAME = answer.USERNAME;
-      const options = {
+      let options = {
         url: baseUrl,
         method: 'get',
         json: true,
@@ -64,10 +66,18 @@ const handleQuestions = async () => {
       if (data == null || data.total == 0 || data.content[0].user.name != USERNAME) {
         console.log('请求错误或用户不存在');
       } else {
+        //获取历史5个团号
+        options.qs.size = 5;
+        data = await promisifyRequest(options).catch(err => {
+          console.log("请求错误：" + err.message);
+        });
         readConfig.list.push({
           'username': USERNAME,
           'currentGroupNo': data.content[0].infoNo,
-          'groupStatus': data.content[0].status
+          'groupStatus': data.content[0].status,
+          'groupHistory': data.content.map(element => {
+            return element.infoNo;
+          })
         })
         fs.writeFileSync('./users.json', JSON.stringify(readConfig, null, 2), { encoding: 'utf-8' });
         console.log('添加成功');
